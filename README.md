@@ -7,6 +7,8 @@ Built as a 7th-semester Agile (Scrum) project with a premium, glassmorphic UI
 inspired by modern design systems (Aceternity / Magic UI style effects hand-coded
 in plain CSS).
 
+🔗 **Live demo:** [https://minitrello-six.vercel.app/](https://minitrello-six.vercel.app/)
+
 ## ✨ Features
 
 - **Create tasks** via an animated modal form (Title + Description required)
