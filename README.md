@@ -25,16 +25,18 @@ in plain CSS).
 | ---------- | ----------------------------------- |
 | Frontend   | React (Vite) + plain CSS            |
 | Backend    | Node.js + Express (RESTful API)     |
-| Database   | MongoDB (Mongoose ODM)              |
+| Database   | Supabase (PostgreSQL)               |
 
 ## 🗂 Project Structure
 
 ```
 mini-trello/
 ├── backend/
-│   ├── models/Task.js        # Mongoose schema
-│   ├── routes/tasks.js       # REST endpoints
-│   ├── server.js             # Express app + DB connection
+│   ├── db/supabase.js          # Supabase client (URL + service role key)
+│   ├── routes/tasks.js         # REST endpoints
+│   ├── scripts/setup-db.js     # one-time: creates table + seed
+│   ├── supabase/schema.sql     # SQL schema + seed demo tasks
+│   ├── server.js               # Express app
 │   ├── package.json
 │   └── .env.example
 └── frontend/
@@ -61,13 +63,13 @@ mini-trello/
 ### Task object
 ```json
 {
-  "id": "64f1a2b3c4d5e6f708192021",
+  "id": "7f6595e2-2440-4676-aabc-201c0399abb4",
   "title": "Design Database Schema",
   "description": "Create ER diagram for the task tables.",
   "status": "in_progress",
   "assigned_to": "Mohit",
-  "createdAt": "2026-09-03T10:00:00.000Z",
-  "updatedAt": "2026-09-03T10:05:00.000Z"
+  "createdAt": "2026-09-05T10:41:06.288Z",
+  "updatedAt": "2026-09-05T10:41:06.288Z"
 }
 ```
 
@@ -75,22 +77,33 @@ mini-trello/
 
 ### Prerequisites
 - **Node.js** (v18+)
-- **MongoDB** — running locally, **or** a MongoDB Atlas connection string.
+- A free **Supabase** project (PostgreSQL hosting — URL + service role key).
 
-### 1. Start MongoDB
-Local install: make sure `mongod` is running (default port `27017`).
-> No local MongoDB? Use Docker: `docker run -d -p 27017:27017 mongo:7`
-> Or use **MongoDB Atlas** and set the URI in `.env`.
+### 1. Set up Supabase
+1. Create a free project at https://supabase.com.
+2. Open **Supabase Dashboard → SQL Editor**, paste the contents of
+   `backend/supabase/schema.sql` and click **Run**. This creates the `tasks`
+   table and inserts 3 demo tasks.
+   (Or run `npm run setup-db` in `backend/` after filling `.env`.)
+3. Copy your project URL and **service role key** from
+   **Project Settings → Data API**.
 
 ### 2. Backend
 ```bash
 cd backend
 npm install
 cp .env.example .env     # Windows: copy .env.example .env
+```
+Edit `.env` and set:
+- `SUPABASE_URL` = your project URL (e.g. `https://xxx.supabase.co`)
+- `SUPABASE_SERVICE_ROLE_KEY` = your service role key
+- `SUPABASE_DB_URL` = Postgres connection string (only needed for `npm run setup-db`)
+
+Then start the server:
+```bash
 npm run dev              # starts on http://localhost:5000
 ```
-`server.js` reads `MONGODB_URI` and `PORT` from `.env`.
-Defaults: `mongodb://127.0.0.1:27017/minitrello` on port `5000`.
+`server.js` reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `PORT` from `.env`.
 
 ### 3. Frontend
 In a second terminal:
@@ -126,12 +139,12 @@ root `vercel.json`):
 Rewrites route `/api/*` to the backend service and all other requests to the
 frontend service, so the app still lives on a single domain.
 
-### 1. MongoDB Atlas (free)
-1. Create a free **M0 cluster** at https://cloud.mongodb.com.
-2. Create a **database user** (user + password).
-3. **Network Access → Add IP → Allow access from anywhere (`0.0.0.0/0`)**.
-4. Copy the connection string, e.g.:
-   `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/minitrello`
+### 1. Prepare Supabase
+1. Create a free project at https://supabase.com.
+2. Run `backend/supabase/schema.sql` once in the **SQL Editor** (this creates the
+   `tasks` table and seeds 3 demo tasks). You can re-run it anytime to reset.
+3. Copy the **project URL** and **service role key** from
+   **Project Settings → Data API**.
 
 ### 2. Push to GitHub
 ```bash
@@ -147,8 +160,9 @@ git push -u origin main
 1. Go to https://vercel.com → **Add New Project** → import your GitHub repo.
 2. Vercel reads the root `vercel.json` and detects the two services (`frontend`
    + `backend`). No root directory override needed.
-3. Add an **Environment Variable** for the backend service:
-   - `MONGODB_URI` = your Atlas connection string (with `/minitrello` at the end)
+3. Add these **Environment Variables** for the backend service:
+   - `SUPABASE_URL` = your Supabase project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` = your Supabase service role key
 4. Click **Deploy**.
 
 Configuration notes:
@@ -160,8 +174,8 @@ Configuration notes:
 
 Your app will be live at `https://<project>.vercel.app`.
 
-> **Security:** never commit real credentials. `MONGODB_URI` is set only as a
-> Vercel env var; `.env`, `node_modules`, and `dist` are git-ignored.
+> **Security:** never commit real credentials. `SUPABASE_SERVICE_ROLE_KEY` is set
+> only as a Vercel env var; `.env`, `node_modules`, and `dist` are git-ignored.
 
 ---
 

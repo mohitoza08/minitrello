@@ -3,24 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
-const dns = require('node:dns');
-const mongoose = require('mongoose');
 const taskRoutes = require('./routes/tasks');
-
-// Some resolvers (Windows Node) fail SRV lookups for Atlas; Node caches a
-// broken/unreachable DNS resolver after network changes. Force well-known
-// resolvers + prefer IPv4 to avoid `querySrv ECONNREFUSED` hangs.
-dns.setDefaultResultOrder('ipv4first');
-try {
-  dns.setServers(['1.1.1.1', '8.8.8.8']);
-} catch (_e) {
-  /* custom resolvers unavailable – fall back to system DNS */
-}
+const supabase = require('./db/supabase');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI =
-  process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/minitrello';
 
 app.use(cors());
 app.use(express.json());
@@ -51,55 +38,16 @@ app.use((_req, res) => {
 // Central error handler
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
-  if (err.name === 'CastError') {
-    return res.status(400).json({ success: false, message: 'Invalid id format.' });
-  }
-  const dbMsg = /timed out|buffering|ECONNREFUSED|ENOTFOUND|MongooseServerSelectionError/.test(
-    err.message || ''
-  );
   res.status(500).json({
     success: false,
-    message: dbMsg
-      ? 'Database connection error. Please try again.'
-      : err.message || 'Server error.',
+    message: err.message || 'Server error.',
   });
-});
-
-let cachedDb = null;
-
-async function connectDb() {
-  if (cachedDb) return cachedDb;
-  cachedDb = mongoose
-    .connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 8000,
-      bufferCommands: false,
-    })
-    .catch((err) => {
-      cachedDb = null;
-      throw err;
-    });
-  return cachedDb;
-}
-
-// Ensure the DB is connected before handling any request (serverless-safe).
-app.use(async (_req, _res, next) => {
-  try {
-    await connectDb();
-    next();
-  } catch (err) {
-    next(err);
-  }
 });
 
 // For local development only. Vercel runs `app` as a serverless function.
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`[api] Mini-Trello API running on http://localhost:${PORT}`);
-    connectDb().catch((err) => {
-      console.error('[db] failed to connect to MongoDB:', err.message);
-      console.error('Make sure MongoDB is running, then restart the server.');
-      process.exit(1);
-    });
   });
 }
 

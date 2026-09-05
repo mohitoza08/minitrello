@@ -24,3 +24,5 @@ Thumbs.db
 
 # Generated source archive
 *.zip
+
+.vercel

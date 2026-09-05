@@ -22,7 +22,7 @@ a practical application of:
 
 - **Frontend development** — React (Vite) with a custom, hand-coded UI
 - **Backend API creation** — Node.js / Express (RESTful)
-- **Database management** — MongoDB (Mongoose ODM)
+- **Database management** — Supabase (PostgreSQL)
 - **Agile / Scrum methodology** — executed in two 1-week sprints
 
 The UI follows a light, editorial "product" design system (neutral surfaces,
@@ -79,7 +79,7 @@ endpoints, static 3-column frontend.
 | Sprint 2 Planning     | Pulled remaining stories: move + delete. |
 | Backend API           | Completed **Update + Delete**: `PATCH /api/tasks/:id`, `PATCH /api/tasks/:id/move`, `DELETE /api/tasks/:id`. |
 | Frontend Integration  | Connected UI to the API with `fetch`; optimistic updates for instant feedback. |
-| Interactivity         | Next/Previous buttons **and** drag-and-drop both persist to MongoDB. |
+| Interactivity         | Next/Previous buttons **and** drag-and-drop both persist to Supabase. |
 
 **Sprint 2 Review Deliverable:** Fully functional board where UI actions persist
 in the database.
@@ -180,16 +180,21 @@ DELETE /api/tasks/64f1a2b3c4d5e6f708192021
 
 ---
 
-## 6. Task Data Model (MongoDB)
+## 6. Task Data Model (Supabase / PostgreSQL)
 
-| Field          | Type   | Notes                                    |
-| -------------- | ------ | ---------------------------------------- |
-| `title`        | String | Required                                 |
-| `description`  | String | Required                                 |
-| `status`       | String | `todo` \| `in_progress` \| `done` (default `todo`) |
-| `assigned_to`  | String | Optional team member                     |
-| `createdAt`    | Date   | Auto (timestamps)                        |
-| `updatedAt`    | Date   | Auto (timestamps)                        |
+The `tasks` table is managed by Supabase. DDL lives in
+`backend/supabase/schema.sql` and the table is created once via the Supabase
+SQL Editor (or `npm run setup-db` in the backend).
+
+| Field          | Type      | Notes                                    |
+| -------------- | --------- | ---------------------------------------- |
+| `id`           | UUID      | Primary key (auto-generated)             |
+| `title`        | text      | Required                                 |
+| `description`  | text      | Required                                 |
+| `status`       | text      | `todo` \| `in_progress` \| `done` (check constraint, default `todo`) |
+| `assigned_to`  | text      | Optional team member (default `''`)      |
+| `created_at`   | timestamptz | Auto (default `now()`)                 |
+| `updated_at`   | timestamptz | Auto-updated via trigger               |
 
 ---
 
@@ -198,8 +203,9 @@ DELETE /api/tasks/64f1a2b3c4d5e6f708192021
 The repo is configured as a **Vercel monorepo** with two services (root
 `vercel.json`): a Vite `frontend` service and a Node `backend` service.
 Rewrites route `/api/*` to the backend and everything else to the frontend, so
-the app runs on a single domain. MongoDB uses a free **Atlas** cluster; the
-connection string is set only as the `MONGODB_URI` environment variable.
+the app runs on a single domain. The backend uses a free **Supabase**
+(PostgreSQL) database; the project URL and service role key are set only as the
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables.
 
 See `README.md` → **Deploy to Vercel** for step-by-step instructions.
 
