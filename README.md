@@ -107,13 +107,22 @@ Open **http://localhost:5173** in your browser. The Vite dev server proxies
 cd frontend && npm run build   # outputs to frontend/dist
 ```
 
-The backend (`backend/server.js`) automatically serves this built frontend,
-so the whole app runs from a single server.
+For a quick local full-app preview, you can also run `node server.js` in
+`backend/` — in development it serves the built `frontend/dist` and the API
+from a single server.
 
-## ☁️ Deploy to Vercel (All-in-One)
+## ☁️ Deploy to Vercel (Monorepo — two services)
 
-This app is set up so the **Express backend hosts both the API and the built
-frontend**, running as a single Vercel serverless app.
+This repo is configured as a Vercel **monorepo** with two services (see the
+root `vercel.json`):
+
+| Service   | Root      | Framework | URL path          |
+| --------- | --------- | --------- | ----------------- |
+| `frontend`| `frontend`| Vite      | `/` (everything)  |
+| `backend` | `backend` | Node      | `/api/*`          |
+
+Rewrites route `/api/*` to the backend service and all other requests to the
+frontend service, so the app still lives on a single domain.
 
 ### 1. MongoDB Atlas (free)
 1. Create a free **M0 cluster** at https://cloud.mongodb.com.
@@ -134,16 +143,16 @@ git push -u origin main
 
 ### 3. Deploy on Vercel
 1. Go to https://vercel.com → **Add New Project** → import your GitHub repo.
-2. **Root Directory**: `backend`
-3. **Framework Preset**: Other
-4. Add an **Environment Variable**:
+2. Vercel reads the root `vercel.json` and detects the two services (`frontend`
+   + `backend`). No root directory override needed.
+3. Add an **Environment Variable** for the backend service:
    - `MONGODB_URI` = your Atlas connection string (with `/minitrello` at the end)
-5. Click **Deploy**.
+4. Click **Deploy**.
 
 Configuration notes:
-- `backend/vercel.json` routes all requests to `server.js` (the serverless handler).
-- `backend/package.json` → `build` script installs + builds the frontend
-  automatically during the Vercel build step.
+- Root `vercel.json` declares services + rewrites (`/api/*` → backend,
+  `*(.*)` → frontend).
+- `backend/server.js` exports the Express app as a Node serverless handler.
 - `frontend/vite.config.js` uses relative asset paths (`base: './'`).
 - The app auto-redeploys whenever you push to GitHub.
 

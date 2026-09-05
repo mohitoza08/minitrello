@@ -195,9 +195,13 @@ DELETE /api/tasks/64f1a2b3c4d5e6f708192021
 
 ## 7. Deployment
 
-The app is configured to deploy to **Vercel** as a single serverless app
-(Express backend serves the built React frontend). See `README.md` →
-**Deploy to Vercel** for step-by-step instructions (MongoDB Atlas + Vercel).
+The repo is configured as a **Vercel monorepo** with two services (root
+`vercel.json`): a Vite `frontend` service and a Node `backend` service.
+Rewrites route `/api/*` to the backend and everything else to the frontend, so
+the app runs on a single domain. MongoDB uses a free **Atlas** cluster; the
+connection string is set only as the `MONGODB_URI` environment variable.
+
+See `README.md` → **Deploy to Vercel** for step-by-step instructions.
 
 Deployed URL: *[https://your-project.vercel.app]()*
 
