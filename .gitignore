@@ -21,3 +21,6 @@ Thumbs.db
 
 # Design-tool workspace (Kombai canvas)
 .kombai/
+
+# Generated source archive
+*.zip
