@@ -29,7 +29,7 @@ export default function Footer({ groups }) {
         <div className="footer-tech">
           <span className="tech-pill">React</span>
           <span className="tech-pill">Express</span>
-          <span className="tech-pill">MongoDB</span>
+          <span className="tech-pill">Supabase</span>
         </div>
       </div>
     </footer>
