@@ -46,27 +46,36 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ success: false, message: err.message || 'Server error.' });
 });
 
+let cachedDb = null;
+
 async function connectDb() {
-  await mongoose.connect(MONGODB_URI);
-  console.log(`[db] connected to MongoDB`);
+  if (cachedDb) return cachedDb;
+  cachedDb = mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+  });
+  return cachedDb;
 }
+
+// Ensure the DB is connected before handling any request (serverless-safe).
+app.use(async (_req, _res, next) => {
+  try {
+    await connectDb();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // For local development only. Vercel runs `app` as a serverless function.
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-  connectDb()
-    .then(() => {
-      app.listen(PORT, () => {
-        console.log(`[api] Mini-Trello API running on http://localhost:${PORT}`);
-      });
-    })
-    .catch((err) => {
+  app.listen(PORT, () => {
+    console.log(`[api] Mini-Trello API running on http://localhost:${PORT}`);
+    connectDb().catch((err) => {
       console.error('[db] failed to connect to MongoDB:', err.message);
       console.error('Make sure MongoDB is running, then restart the server.');
       process.exit(1);
     });
-} else if (process.env.VERCEL) {
-  // Connect lazily so the serverless function can serve requests.
-  connectDb().catch((err) => console.error('[db] connect failed:', err.message));
+  });
 }
 
 module.exports = app;
