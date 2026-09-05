@@ -163,4 +163,4 @@ Your app will be live at `https://<project>.vercel.app`.
 
 ---
 
-**Made by Mohit Oza · 7IT-08 · 7th Semester**
+**Made with ❤️ by Mohit Oza · 7IT-08 · 7th Semester**
