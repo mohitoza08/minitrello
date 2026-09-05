@@ -3,8 +3,19 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
+const dns = require('node:dns');
 const mongoose = require('mongoose');
 const taskRoutes = require('./routes/tasks');
+
+// Some resolvers (Windows Node) fail SRV lookups for Atlas; Node caches a
+// broken/unreachable DNS resolver after network changes. Force well-known
+// resolvers + prefer IPv4 to avoid `querySrv ECONNREFUSED` hangs.
+dns.setDefaultResultOrder('ipv4first');
+try {
+  dns.setServers(['1.1.1.1', '8.8.8.8']);
+} catch (_e) {
+  /* custom resolvers unavailable – fall back to system DNS */
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
