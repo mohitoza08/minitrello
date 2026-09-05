@@ -43,7 +43,11 @@ app.use((err, _req, res, _next) => {
   if (err.name === 'CastError') {
     return res.status(400).json({ success: false, message: 'Invalid id format.' });
   }
-  res.status(500).json({ success: false, message: err.message || 'Server error.' });
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Server error.',
+    detail: err.name || undefined,
+  });
 });
 
 let cachedDb = null;
