@@ -43,10 +43,14 @@ app.use((err, _req, res, _next) => {
   if (err.name === 'CastError') {
     return res.status(400).json({ success: false, message: 'Invalid id format.' });
   }
+  const dbMsg = /timed out|buffering|ECONNREFUSED|ENOTFOUND|MongooseServerSelectionError/.test(
+    err.message || ''
+  );
   res.status(500).json({
     success: false,
-    message: err.message || 'Server error.',
-    detail: err.name || undefined,
+    message: dbMsg
+      ? 'Database connection error. Please try again.'
+      : err.message || 'Server error.',
   });
 });
 
@@ -54,9 +58,15 @@ let cachedDb = null;
 
 async function connectDb() {
   if (cachedDb) return cachedDb;
-  cachedDb = mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 5000,
-  });
+  cachedDb = mongoose
+    .connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 8000,
+      bufferCommands: false,
+    })
+    .catch((err) => {
+      cachedDb = null;
+      throw err;
+    });
   return cachedDb;
 }
 
